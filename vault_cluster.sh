@@ -20,6 +20,24 @@ generate_csr() {
     openssl req -new -key vault$1.key -out vault$1.csr -subj "/C=/ST=/L=/O=/OU=/CN=/emailAddress=" 2> /dev/null
 }
 
+sign_crt() {
+tee "vault$1.ext" 1> /dev/null <<EOF
+authorityKeyIdentifier=keyid,issuer
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = vault$1
+DNS.2 = localhost
+IP.1 = 0.0.0.0
+IP.2 = 127.0.0.1
+EOF
+
+openssl x509 -req -in vault$1.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial \
+    -out vault$1.crt -days 1825 -sha256 -extfile vault$1.ext
+}
+
 generate_config() {
 size=$1
 port=$2
