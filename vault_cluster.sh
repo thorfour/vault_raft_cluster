@@ -14,11 +14,7 @@ storage "raft" {
     path    = "/vault"
     node_id = "vault_1"
 EOF
-}
-
-generate_retry() {
 a=("$@")
-s=""
 for i in "${a[@]}"
 do
 tee -a "$cfg" 1> /dev/null <<EOF 
@@ -41,7 +37,6 @@ do
     clusterPorts+=($b)
 done
 
-generate_config
-retry_join=$(generate_retry "${apiPorts[@]}")
+retry_join=$(generate_config "${apiPorts[@]}")
 
 #docker run --network vault --name vault${config} --rm -it -e VAULT_API_ADDR="https://0.0.0.0:${port1}" -e SKIP_SETCAP=true -p ${port2}:${port2} -p ${port1}:${port1} -v $(pwd)/config${config}.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl
