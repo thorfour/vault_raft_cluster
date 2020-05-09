@@ -109,6 +109,8 @@ EOF
 
 main() {
 
+docker network create vault 2> /dev/null && true
+
 generate_all_certs $clusterSize
 
 for ((j=0; j < $clusterSize; j++))
