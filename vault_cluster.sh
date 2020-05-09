@@ -4,6 +4,14 @@ set -eou pipefail
 clusterSize="${cluster_size:-$1}"
 basePort=8200
 
+generate_ca() {
+    openssl genrsa -out myCA.key 2048
+}
+
+generate_ca_crt() {
+    openssl req -x509 -new -nodes -key myCA.key -sha256 -days 1825 -out myCA.pem -subj "/C=/ST=/L=/O=/OU=/CN=/emailAddress=" 2> /dev/null
+}
+
 generate_config() {
 size=$1
 port=$2
