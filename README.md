@@ -6,3 +6,7 @@ certs
 `./vault_cluster.sh <num>`
 
 where <num> is the number of nodes you'd like created in the cluster
+
+## To Clean up
+
+`./clean_up <num>`
