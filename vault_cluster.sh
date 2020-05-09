@@ -61,7 +61,7 @@ done
 
 for ((j=0; j < $clusterSize; j++))
 do
-    let port=$basePort+$i*2
+    let port=$basePort+$j*2
     let port2=$port+1
     echo "Starting Vault in docker on ports $port and $port2"
     docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl
