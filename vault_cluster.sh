@@ -12,6 +12,14 @@ generate_ca_crt() {
     openssl req -x509 -new -nodes -key myCA.key -sha256 -days 1825 -out myCA.pem -subj "/C=/ST=/L=/O=/OU=/CN=/emailAddress=" 2> /dev/null
 }
 
+generate_key() {
+    openssl genrsa -out vault$1.key 2048
+}
+
+generate_csr() {
+    openssl req -new -key vault$1.key -out vault$1.csr -subj "/C=/ST=/L=/O=/OU=/CN=/emailAddress=" 2> /dev/null
+}
+
 generate_config() {
 size=$1
 port=$2
