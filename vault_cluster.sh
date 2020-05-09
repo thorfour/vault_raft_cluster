@@ -85,7 +85,7 @@ fi
 tee -a "config$index.hcl" 1> /dev/null <<EOF 
     retry_join {
         leader_api_addr = "https://vault$i:$a"
-        leader_ca_cert = "$(cat certs/myCA.pem)"
+        leader_ca_cert = "$(sed ':a;N;$!ba;s,\n,\\n,g' certs/myCA.pem)"
     }
 EOF
 done
