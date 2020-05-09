@@ -24,6 +24,19 @@ tee -a "$cfg" 1> /dev/null <<EOF
     }
 EOF
 done
+tee -a "$cfg" 1> /dev/null <<EOF
+}
+listener "tcp" {
+    address = "0.0.0.0:8200"
+    cluster_address = "vault1:8201"
+    tls_disable = false
+    tls_cert_file = "/certs/vault1.crt"
+    tls_key_file = "/certs/vault1.key"
+}
+token = "root"
+disable_mlock = true
+cluster_addr = "https://vault1:8201"
+EOF
 }
 
 apiPorts=()
