@@ -1,5 +1,4 @@
-# Starts a Hashicorp Vault cluster with Raft storage using self-signed TLS
-certs
+# Starts a Hashicorp Vault cluster with Raft storage using self-signed TLS certs
 
 ## To Run
 
