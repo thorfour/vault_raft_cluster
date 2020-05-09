@@ -81,7 +81,6 @@ then
     continue
 fi
 
-# TODO copy the contents of the myCA.pem into the leader_ca_cert portion
 tee -a "config$index.hcl" 1> /dev/null <<EOF 
     retry_join {
         leader_api_addr = "https://vault$i:$a"
