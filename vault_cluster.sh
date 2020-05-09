@@ -38,6 +38,24 @@ openssl x509 -req -in vault$1.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial \
     -out vault$1.crt -days 1825 -sha256 -extfile vault$1.ext
 }
 
+generate_all_certs() {
+    size=$1
+    mkdir -p certs
+    pushd certs
+
+    generate_ca
+    generate_ca_crt
+
+    for ((i=0; i < $size; i++))
+    do
+        generate_key $i
+        generate_csr $i
+        sign_crt $i
+    done
+
+    popd
+}
+
 generate_config() {
 size=$1
 port=$2
@@ -61,6 +79,7 @@ then
     continue
 fi
 
+# TODO copy the contents of the myCA.pem into the leader_ca_cert portion
 tee -a "config$index.hcl" 1> /dev/null <<EOF 
     retry_join {
         leader_api_addr = "https://vault$i:$a"
@@ -87,6 +106,10 @@ cluster_addr = "https://vault$index:$b"
 EOF
 }
 
+main() {
+
+generate_all_certs $clusterSize
+
 for ((j=0; j < $clusterSize; j++))
 do
     echo "Generating config for $j"
@@ -100,3 +123,6 @@ do
     echo "Starting Vault in docker on ports $port and $port2"
     docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl
 done
+}
+
+main
