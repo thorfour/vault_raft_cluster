@@ -35,19 +35,21 @@ tee -a "config$index.hcl" 1> /dev/null <<EOF
 EOF
 done
 
-let cluster_addr="$port + 1"
+let a=$port+$j*2
+let b=$a+1
+
 tee -a "config$index.hcl" 1> /dev/null <<EOF
 }
 listener "tcp" {
-    address = "0.0.0.0:$port"
-    cluster_address = "vault$index:$cluster_addr"
+    address = "0.0.0.0:$a"
+    cluster_address = "vault$index:$b"
     tls_disable = false
     tls_cert_file = "/certs/vault$index.crt"
     tls_key_file = "/certs/vault$index.key"
 }
 token = "root"
 disable_mlock = true
-cluster_addr = "https://vault$index:$cluster_addr"
+cluster_addr = "https://vault$index:$b"
 EOF
 }
 
@@ -57,4 +59,10 @@ do
     generate_config $clusterSize $basePort $j
 done
 
-#docker run --network vault --name vault${config} --rm -it -e VAULT_API_ADDR="https://0.0.0.0:${port1}" -e SKIP_SETCAP=true -p ${port2}:${port2} -p ${port1}:${port1} -v $(pwd)/config${config}.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl
+for ((j=0; j < $clusterSize; j++))
+do
+    let port=$basePort+$i*2
+    let port2=$port+1
+    echo "Starting Vault in docker on ports $port and $port2"
+    docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl
+done
