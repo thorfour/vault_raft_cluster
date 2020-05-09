@@ -69,9 +69,6 @@ storage "raft" {
     node_id = "vault_$index"
 EOF
 
-# copy in contents of CA cert
-cacrt='cat certs/myCA.pem'
-
 for ((i=0; i < $size; i++))
 do
 
@@ -88,7 +85,7 @@ fi
 tee -a "config$index.hcl" 1> /dev/null <<EOF 
     retry_join {
         leader_api_addr = "https://vault$i:$a"
-        leader_ca_cert = $cacrt
+        leader_ca_cert = "$(cat certs/myCA.pem)"
     }
 EOF
 done
