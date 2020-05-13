@@ -145,6 +145,8 @@ do
     VAULT_CACERT=certs/myCA.pem vault operator unseal -address=https://localhost:$port $key 1> /dev/null
     sleep 15
 done
+
+echo "Cluster successfully initialized and unsealed"
 }
 
 main
