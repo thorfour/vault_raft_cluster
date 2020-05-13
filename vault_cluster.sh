@@ -115,7 +115,6 @@ generate_all_certs $clusterSize
 
 for ((j=0; j < $clusterSize; j++))
 do
-    echo "Generating config for $j"
     generate_config $clusterSize $basePort $j
 done
 
@@ -123,8 +122,8 @@ for ((j=0; j < $clusterSize; j++))
 do
     let port=$basePort+$j*2
     let port2=$port+1
-    echo "Starting Vault in docker on ports $port and $port2"
-    docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl
+    echo "Starting vault$j in docker on ports $port and $port2"
+    docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl 1> /dev/null
 done
 
 init_response=$(VAULT_CACERT=certs/myCA.pem vault operator init -format=json -key-shares 1 -key-threshold 1)
