@@ -5,11 +5,11 @@ clusterSize="${cluster_size:-$1}"
 basePort=8200
 
 generate_ca() {
-    openssl genrsa -out myCA.key 2048 &> /dev/null
+    openssl genrsa -out CA$1.key 2048 &> /dev/null
 }
 
 generate_ca_crt() {
-    openssl req -x509 -new -nodes -key myCA.key -sha256 -days 1825 -out myCA.pem -subj "/C=/ST=/L=/O=/OU=/CN=/emailAddress=" &> /dev/null
+    openssl req -x509 -new -nodes -key CA$1.key -sha256 -days 1825 -out CA$1.pem -subj "/C=/ST=/L=/O=/OU=/CN=/emailAddress=" &> /dev/null
 }
 
 generate_key() {
@@ -35,7 +35,7 @@ IP.1 = 0.0.0.0
 IP.2 = 127.0.0.1
 EOF
 
-openssl x509 -req -in vault$1.csr -CA myCA.pem -CAkey myCA.key -CAcreateserial \
+openssl x509 -req -in vault$1.csr -CA CA$1.pem -CAkey CA$1.key -CAcreateserial \
     -out vault$1.crt -days 1825 -sha256 -extfile vault$1.ext &> /dev/null
 }
 
@@ -44,15 +44,19 @@ generate_all_certs() {
     mkdir -p certs
     pushd certs
 
-    generate_ca
-    generate_ca_crt
-
     for ((i=0; i < $size; i++))
     do
+
+        generate_ca $i
+        generate_ca_crt $i
+
         generate_key $i
         generate_csr $i
         sign_crt $i
     done
+
+    # Create single CA cert file
+    cat CA*.pem > CA.pem
 
     popd
 }
@@ -84,7 +88,7 @@ fi
 tee -a "config$index.hcl" 1> /dev/null <<EOF 
     retry_join {
         leader_api_addr = "https://vault$i:$a"
-        leader_ca_cert = "$(sed ':a;N;$!ba;s,\n,\\n,g' certs/myCA.pem)"
+        leader_ca_cert = "$(sed ':a;N;$!ba;s,\n,\\n,g' certs/CA.pem)"
     }
 EOF
 done
@@ -126,7 +130,7 @@ do
     docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl 1> /dev/null
 done
 
-init_response=$(VAULT_CACERT=certs/myCA.pem vault operator init -format=json -key-shares 1 -key-threshold 1)
+init_response=$(VAULT_CACERT=certs/CA.pem vault operator init -format=json -key-shares 1 -key-threshold 1)
 
 key=$(echo $init_response | jq -r .unseal_keys_b64[0])
 token=$(echo $init_response | jq -r .root_token)
@@ -142,7 +146,7 @@ echo ""
 for ((j = 0; j < $clusterSize; j++))
 do
     let port=$basePort+$j*2
-    VAULT_CACERT=certs/myCA.pem vault operator unseal -address=https://localhost:$port $key 1> /dev/null
+    VAULT_CACERT=certs/CA.pem vault operator unseal -address=https://localhost:$port $key 1> /dev/null
     sleep 15
 done
 
