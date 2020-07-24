@@ -126,7 +126,7 @@ do
     docker run -d --network vault --name vault$j --rm -e VAULT_API_ADDR="https://0.0.0.0:$port" -e SKIP_SETCAP=true -p $port2:$port2 -p $port:$port -v $(pwd)/config$j.hcl:/config.hcl -v $(pwd)/certs/:/certs vault vault server -config /config.hcl 1> /dev/null
 done
 
-init_response=$(VAULT_CACERT=certs/myCA.pem vault operator init -format=json -key-shares 1 -key-threshold 1)
+init_response=$(VAULT_ADDR="https://0.0.0.0:$basePort" VAULT_CACERT=certs/myCA.pem vault operator init -format=json -key-shares 1 -key-threshold 1)
 
 key=$(echo $init_response | jq -r .unseal_keys_b64[0])
 token=$(echo $init_response | jq -r .root_token)
